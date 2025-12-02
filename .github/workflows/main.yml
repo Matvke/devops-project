@@ -44,11 +44,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
       
-      - name: Docker Login to Yandex Container Registry
+      - name: Docker Login with Service Account Key
         run: |
-          # Прямая авторизация через OAuth токен (самый простой способ)
-          echo '${{ secrets.YC_OAUTH_TOKEN }}' | docker login \
-            --username oauth \
+          # Создаем файл с ключом из секрета
+          echo '${{ secrets.YC_SA_KEY }}' > /tmp/sa-key.json
+          
+          # Авторизуемся через JSON ключ
+          cat /tmp/sa-key.json | docker login \
+            --username json_key \
             --password-stdin \
             cr.yandex
       
