@@ -161,6 +161,4 @@ terraform.tfstate.backup
 .terraform.lock.hcl
 *.tf
 
-# Yandex Cloud keys
-*.json
 
