@@ -115,8 +115,8 @@ if os.getenv('USE_S3', 'False').lower() in ('true', '1', 't'):
     STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
     # URL'ы
-    STATIC_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.storage.yandexcloud.net/static/'
-    MEDIA_URL = f'https://{AWS_STORAGE_BUCKET_NAME}.storage.yandexcloud.net/media/'
+    STATIC_URL = '/backend_static/'  # По идее обращается к Nginx и он проксирует в s3
+    MEDIA_URL = '/media/' # По идее обращается к Nginx и он проксирует в s3
 else:
     STATIC_URL = '/backend_static/'
     STATIC_ROOT = os.path.join(BASE_DIR, 'backend_static')
