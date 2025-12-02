@@ -84,12 +84,3 @@ jobs:
           tags: |
             cr.yandex/crp6qrsugbr2qs16ckd1/kittygram-gateway:${{ github.sha }}
             cr.yandex/crp6qrsugbr2qs16ckd1/kittygram-gateway:latest
-
-      - name: Build and push Database
-        uses: docker/build-push-action@v4
-        with:
-          context: ./postgre/
-          push: true
-          tags: |
-            cr.yandex/crp6qrsugbr2qs16ckd1/kittygram-database:${{ github.sha }}
-            cr.yandex/crp6qrsugbr2qs16ckd1/kittygram-database:latest
