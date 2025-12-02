@@ -1,5 +1,3 @@
-version: '3'
-
 volumes:
   pg_data:
   static:
@@ -7,7 +5,7 @@ volumes:
 
 services:
   db:
-    image: postgres:13
+    image: postgres:14
     env_file: .env
     volumes:
       - pg_data:/var/lib/postgresql/data
@@ -16,8 +14,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+  
   backend:
-    image: matvke/kittygram_backend:latest
+    image: cr.yandex/crp6qrsugbr2qs16ckd1/kittygram-backend:latest+
     env_file: .env
     depends_on:
       db:
@@ -25,14 +24,16 @@ services:
     volumes:
       - static:/app/backend_static
       - media:/app/media
+  
   frontend:
-    image: matvke/kittygram_frontend:latest
+    image: cr.yandex/crp6qrsugbr2qs16ckd1/kittygram-frontend:latest+
     env_file: .env
     command: cp -r /app/build/. /static/
     volumes:
       - static:/static
+  
   gateway:
-    image: matvke/kittygram_gateway:latest
+    image: cr.yandex/crp6qrsugbr2qs16ckd1/kittygram-gateway:latest+
     env_file: .env
     ports:
       - 9000:80
