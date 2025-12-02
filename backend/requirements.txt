@@ -11,3 +11,4 @@ pytest-pythonpath==0.7.3
 PyYAML==6.0
 django-storages==1.13.2
 boto3==1.26.165
+gunicorn==20.1.0 
