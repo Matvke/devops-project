@@ -39,3 +39,26 @@ output "buckets_info" {
     }
   }
 }
+
+output "registry_id" {
+  value = yandex_container_registry.my-registry.id
+}
+
+output "repository_urls" {
+  value = [
+    "cr.yandex/${yandex_container_repository.kittygram-backend.name}",
+    "cr.yandex/${yandex_container_repository.kittygram-database.name}",
+    "cr.yandex/${yandex_container_repository.kittygram-frontend.name}",
+    "cr.yandex/${yandex_container_repository.kittygram-gateway.name}"
+  ]
+}
+
+output "backend_repository" {
+  description = "URL backend repository"
+  value       = "cr.yandex/${yandex_container_repository.kittygram-backend.name}"
+}
+
+output "frontend_repository" {
+  description = "URL frontend repository"
+  value       = "cr.yandex/${yandex_container_repository.kittygram-frontend.name}"
+}
