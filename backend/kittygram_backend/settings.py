@@ -97,6 +97,7 @@ USE_L10N = True
 
 USE_TZ = True
 
+# settings.py
 if os.getenv('USE_S3', 'False').lower() in ('true', '1', 't'):
     # Yandex Object Storage настройки
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
@@ -109,14 +110,18 @@ if os.getenv('USE_S3', 'False').lower() in ('true', '1', 't'):
     AWS_DEFAULT_ACL = 'public-read'
     AWS_QUERYSTRING_AUTH = False
     AWS_S3_FILE_OVERWRITE = False
+    AWS_S3_OBJECT_PARAMETERS = {
+        'CacheControl': 'max-age=86400',
+    }
 
-     # Хранилища
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    # Хранилища (используем кастомные классы)
+    STATICFILES_STORAGE = 'kittygram_backend.storage_backends.StaticStorage'
+    DEFAULT_FILE_STORAGE = 'kittygram_backend.storage_backends.MediaStorage'
 
-    # URL'ы
-    STATIC_URL = '/backend_static/'  # По идее обращается к Nginx и он проксирует в s3
-    MEDIA_URL = '/media/' # По идее обращается к Nginx и он проксирует в s3
+    # URL'ы напрямую к S3 или через CDN
+    STATIC_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/static/'
+    MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/media/'
+    
 else:
     STATIC_URL = '/backend_static/'
     STATIC_ROOT = os.path.join(BASE_DIR, 'backend_static')

@@ -152,13 +152,12 @@ media/
 node_modules
 
 # Terraform
-**/.terraform/
 **/*.tfstate
 **/*.tfstate.*
 **/*.tfvars
 **/*.tfvars.json
 terraform.tfstate.backup
 .terraform.lock.hcl
-*.tf
-
-
+**/*.terraform
+key.json
+terraform_outputs.json
