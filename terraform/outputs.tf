@@ -47,9 +47,7 @@ output "registry_id" {
 output "repository_urls" {
   value = [
     "cr.yandex/${yandex_container_repository.kittygram-backend.name}",
-    "cr.yandex/${yandex_container_repository.kittygram-database.name}",
     "cr.yandex/${yandex_container_repository.kittygram-frontend.name}",
-    "cr.yandex/${yandex_container_repository.kittygram-gateway.name}"
   ]
 }
 
@@ -61,4 +59,51 @@ output "backend_repository" {
 output "frontend_repository" {
   description = "URL frontend repository"
   value       = "cr.yandex/${yandex_container_repository.kittygram-frontend.name}"
+}
+
+output "vpc_network_id" {
+  description = "ID VPC сети"
+  value       = yandex_vpc_network.main.id
+}
+
+output "vpc_network_name" {
+  description = "Имя VPC сети"
+  value       = yandex_vpc_network.main.name
+}
+
+output "subnet_ids" {
+  description = "ID подсетей"
+  value = {
+    public       = yandex_vpc_subnet.public.id
+    private_app  = yandex_vpc_subnet.private_app.id
+    private_db   = yandex_vpc_subnet.private_db.id
+  }
+}
+
+output "subnet_cidrs" {
+  description = "CIDR блоки подсетей"
+  value = {
+    public       = var.public_subnet_cidr
+    private_app  = var.private_app_subnet_cidr
+    private_db   = var.private_db_subnet_cidr
+  }
+}
+
+output "security_group_ids" {
+  description = "ID групп безопасности"
+  value = {
+    load_balancer = yandex_vpc_security_group.lb_sg.id
+    backend       = yandex_vpc_security_group.backend_sg.id
+    database      = yandex_vpc_security_group.db_sg.id
+  }
+}
+
+output "nat_gateway_id" {
+  description = "ID NAT Gateway"
+  value       = yandex_vpc_gateway.nat_gateway.id
+}
+
+output "route_table_id" {
+  description = "ID таблицы маршрутизации"
+  value       = yandex_vpc_route_table.private_rt.id
 }
