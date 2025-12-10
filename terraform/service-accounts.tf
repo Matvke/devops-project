@@ -26,6 +26,36 @@ resource "yandex_iam_service_account" "backend" {
 }
 
 # Роли для backend SA
+resource "yandex_resourcemanager_folder_iam_member" "backend_vpc_user" {
+  folder_id = var.folder_id
+  role      = "vpc.user"
+  member    = "serviceAccount:${yandex_iam_service_account.backend.id}"
+}
+
+resource "yandex_resourcemanager_folder_iam_member" "backend_admin" {
+  folder_id = var.folder_id
+  role      = "admin"
+  member    = "serviceAccount:${yandex_iam_service_account.backend.id}"
+}
+
+resource "yandex_resourcemanager_folder_iam_member" "backend_compute_admin" {
+  folder_id = var.folder_id
+  role      = "compute.admin"
+  member    = "serviceAccount:${yandex_iam_service_account.backend.id}"
+}
+
+resource "yandex_resourcemanager_folder_iam_member" "backend_compute_user" {
+  folder_id = var.folder_id
+  role      = "compute.images.user" 
+  member    = "serviceAccount:${yandex_iam_service_account.backend.id}"
+}
+
+resource "yandex_resourcemanager_folder_iam_member" "backend_iam_user" {
+  folder_id = var.folder_id
+  role      = "iam.serviceAccounts.user" 
+  member    = "serviceAccount:${yandex_iam_service_account.backend.id}"
+}
+
 resource "yandex_resourcemanager_folder_iam_member" "backend_storage_uploader" {
   folder_id = var.folder_id
   role      = "storage.uploader"
@@ -38,7 +68,6 @@ resource "yandex_resourcemanager_folder_iam_member" "backend_storage_viewer" {
   member    = "serviceAccount:${yandex_iam_service_account.backend.id}"
 }
 
-# роль для чтения объектов
 resource "yandex_resourcemanager_folder_iam_member" "storage_viewer" {
   count = var.grant_viewer_access ? 1 : 0
 
@@ -59,7 +88,6 @@ resource "yandex_resourcemanager_folder_iam_member" "backend_logging_writer" {
   member    = "serviceAccount:${yandex_iam_service_account.backend.id}"
 }
 
-# Мониторинг роли для backend:
 resource "yandex_resourcemanager_folder_iam_member" "backend_monitoring_editor" {
   folder_id = var.folder_id
   role      = "monitoring.editor"
@@ -67,21 +95,8 @@ resource "yandex_resourcemanager_folder_iam_member" "backend_monitoring_editor" 
 }
 
 # Service Account для PostgreSQL 
-resource "yandex_iam_service_account" "postgres" {
+resource "yandex_iam_service_account" "sa_postgres" {
   name        = var.postgres_service_account_name
   description = "Service account для PostgreSQL"
   folder_id   = var.folder_id
-}
-
-# PostgreSQL в контейнере
-resource "yandex_resourcemanager_folder_iam_member" "postgres_container_minimal" {
-  folder_id = var.folder_id
-  role      = "container-registry.images.puller"
-  member    = "serviceAccount:${yandex_iam_service_account.postgres.id}"
-}
-
-# Static keys для backend (если нужно для S3)
-resource "yandex_iam_service_account_static_access_key" "backend_s3" {
-  service_account_id = yandex_iam_service_account.backend.id
-  description        = "Static key for S3 access from backend"
 }

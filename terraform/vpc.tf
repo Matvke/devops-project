@@ -44,17 +44,6 @@ resource "yandex_vpc_subnet" "private_app" {
   labels         = var.tags
 }
 
-# Приватная подсеть БД
-resource "yandex_vpc_subnet" "private_db" {
-  name           = "private-db-subnet"
-  description    = "Приватная подсеть для базы данных"
-  v4_cidr_blocks = [var.private_db_subnet_cidr]
-  zone           = var.zone
-  network_id     = yandex_vpc_network.main.id
-  route_table_id = yandex_vpc_route_table.private_rt.id
-  labels         = var.tags
-}
-
 # Группы безопасности
 resource "yandex_vpc_security_group" "lb_sg" {
   name        = "load-balancer-sg"
@@ -112,34 +101,6 @@ resource "yandex_vpc_security_group" "backend_sg" {
 
   egress {
     description    = "Разрешить все исходящие соединения"
-    protocol       = "ANY"
-    v4_cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-resource "yandex_vpc_security_group" "db_sg" {
-  name        = "database-sg"
-  description = "Security Group для базы данных"
-  network_id  = yandex_vpc_network.main.id
-  labels      = var.tags
-
-  ingress {
-    description       = "PostgreSQL от Backend"
-    protocol          = "TCP"
-    port              = 5432
-    security_group_id = yandex_vpc_security_group.backend_sg.id
-  }
-
-  # Правило для доступа только из приватных подсетей
-  ingress {
-    description    = "PostgreSQL из внутренней сети"
-    protocol       = "TCP"
-    port           = 5432
-    v4_cidr_blocks = [var.private_app_subnet_cidr, var.private_db_subnet_cidr]
-  }
-
-  egress {
-    description    = "Разрешить исходящие соединения БД"
     protocol       = "ANY"
     v4_cidr_blocks = ["0.0.0.0/0"]
   }

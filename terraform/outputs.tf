@@ -76,7 +76,6 @@ output "subnet_ids" {
   value = {
     public       = yandex_vpc_subnet.public.id
     private_app  = yandex_vpc_subnet.private_app.id
-    private_db   = yandex_vpc_subnet.private_db.id
   }
 }
 
@@ -85,7 +84,6 @@ output "subnet_cidrs" {
   value = {
     public       = var.public_subnet_cidr
     private_app  = var.private_app_subnet_cidr
-    private_db   = var.private_db_subnet_cidr
   }
 }
 
@@ -94,7 +92,6 @@ output "security_group_ids" {
   value = {
     load_balancer = yandex_vpc_security_group.lb_sg.id
     backend       = yandex_vpc_security_group.backend_sg.id
-    database      = yandex_vpc_security_group.db_sg.id
   }
 }
 
@@ -106,4 +103,34 @@ output "nat_gateway_id" {
 output "route_table_id" {
   description = "ID таблицы маршрутизации"
   value       = yandex_vpc_route_table.private_rt.id
+}
+
+output "load_balancer" {
+  description = "Load Balancer details"
+  value = {
+    address = try(
+      one([
+        for listener in yandex_lb_network_load_balancer.main.listener : 
+        listener.external_address_spec[0].address
+        if length(listener.external_address_spec) > 0
+      ]),
+      null
+    )
+    
+    port = try(one(yandex_lb_network_load_balancer.main.listener[*].port), null)
+    full_info = try(yandex_lb_network_load_balancer.main, null)
+  }
+  sensitive = true
+}
+
+output "generated_env_preview" {
+  value = <<-EOT
+    =========== GENERATED .ENV PREVIEW ===========
+    ${replace(data.template_file.django_env.rendered, 
+      var.postgres_password, 
+      "***HIDDEN***")}
+    ==============================================
+  EOT
+  
+  sensitive = false
 }
