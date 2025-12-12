@@ -1,0 +1,57 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+users:
+  - name: ubuntu
+    groups: [sudo, docker]
+    shell: /bin/bash
+    sudo: 'ALL=(ALL) NOPASSWD:ALL'
+    ssh-authorized-keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHG7I/TEXSLjhxxLOnuCMEPYKnn6qVaO7psHffR2/G9l matvei31055@gmail.com
+
+packages:
+  - docker.io
+  - docker-compose
+
+write_files:
+  - path: /home/ubuntu/docker-compose.yml
+    content: |
+      version: '3.0'
+      services:
+        postgres:
+          image: postgres:13
+          restart: always
+          env_file: .env
+          environment:
+            POSTGRES_DB: ${POSTGRES_DB}
+            POSTGRES_USER: ${POSTGRES_USER}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+          volumes:
+            - pg_data:/var/lib/postgresql/data
+          ports:
+            - "5432:5432"
+          healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
+
+      volumes:
+        pg_data:
+    owner: ubuntu:ubuntu
+    permissions: '0644'
+
+runcmd:
+  - |
+    cat > /home/ubuntu/.env << EOF
+    POSTGRES_DB=kittygram
+    POSTGRES_USER=kittygram_user
+    POSTGRES_PASSWORD=kittygram_password
+    EOF
+  - chown ubuntu:ubuntu /home/ubuntu/.env
+  - chmod 644 /home/ubuntu/.env
+  - systemctl enable docker
+  - systemctl start docker
+  - cd /home/ubuntu && docker-compose up -d
+  - ufw allow 5432
