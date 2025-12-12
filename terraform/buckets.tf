@@ -22,11 +22,11 @@ resource "yandex_storage_bucket" "frontend_static" {
   tags = var.bucket_tags["frontend"]
 }
 
-# Грант на публичный доступ к фронтенд бакету (для статического сайта)
+# Грант на публичный доступ к фронтенд бакету 
 resource "yandex_storage_bucket_grant" "frontend_public" {
   bucket = yandex_storage_bucket.frontend_static.bucket
   
-  # Доступ для всех пользователей (публичный доступ для чтения)
+  # Доступ для всех пользователей
   grant {
     uri         = "http://acs.amazonaws.com/groups/global/AllUsers"
     permissions = ["READ"]
@@ -34,11 +34,9 @@ resource "yandex_storage_bucket_grant" "frontend_public" {
   }
 }
 
-# Создание бакета для медиа файлов
 resource "yandex_storage_bucket" "media_files" {
   bucket = var.bucket_names["media"]
 
-  # Более строгий CORS для медиа
   cors_rule {
     allowed_headers = ["Authorization", "Content-Type"]
     allowed_methods = ["GET", "PUT", "POST"]

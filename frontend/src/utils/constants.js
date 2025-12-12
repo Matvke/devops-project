@@ -1,4 +1,4 @@
-export const URL = process.env.API_URL;
+export const URL = "";
 
 export const colorsList = [
   "#FFE4C4",

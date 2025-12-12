@@ -1,45 +1,37 @@
-# Network Load Balancer
-resource "yandex_lb_network_load_balancer" "main" {
-  name = var.lb_name
-  folder_id = var.folder_id
-
-  # Listener для HTTP (порт 80)
-  listener {
-    name = "http-listener"
-    port = 80
+resource "yandex_alb_backend_group" "static" {
+  name = "static-group"
+  
+  http_backend {
+    name = "static"
     
-    external_address_spec {
-      ip_version = "ipv4"
-    }
+    storage_bucket = yandex_storage_bucket.media_files.bucket
   }
-
-  # Привязка Target Group с health check
-  attached_target_group {
-    target_group_id = yandex_lb_target_group.backend.id
-    
-    healthcheck {
-      name = "http"
-      http_options {
-        port = 80
-        path = "/"
-      }
-    }
-  }
-
-  labels = var.tags
-
-  depends_on = [yandex_lb_target_group.backend]
 }
 
-resource "yandex_lb_target_group" "backend" {
-  name = "backend-tg"
+resource "yandex_alb_backend_group" "frontend" {
+  name = "frontend-group"
   
-  dynamic "target" {
-    for_each = yandex_compute_instance_group.backend-vm-group.instances
+  http_backend {
+    name = "static"
+    storage_bucket = yandex_storage_bucket.frontend_static.bucket
+  }
+}
+
+resource "yandex_alb_backend_group" "api" {
+  name = "api-group"
+  
+  http_backend {
+    name = "api"
+    port = 3000
     
-    content {
-      subnet_id  = yandex_vpc_subnet.private_app.id
-      address = target.value.network_interface[0].ip_address
+    target_group_ids = [yandex_compute_instance_group.backend-vm-group.load_balancer[0].target_group_id]
+    
+    healthcheck {
+      timeout  = "10s"
+      interval = "1s"
+      http_healthcheck {
+        path = "/api"
+      }
     }
   }
 }

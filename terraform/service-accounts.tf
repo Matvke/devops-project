@@ -32,6 +32,12 @@ resource "yandex_resourcemanager_folder_iam_member" "backend_vpc_user" {
   member    = "serviceAccount:${yandex_iam_service_account.backend.id}"
 }
 
+resource "yandex_resourcemanager_folder_iam_member" "backend-role-images-puller" {
+  folder_id = var.folder_id
+  role      = "container-registry.images.puller"
+  member    = "serviceAccount:${yandex_iam_service_account.backend.id}"
+}
+
 resource "yandex_resourcemanager_folder_iam_member" "backend_admin" {
   folder_id = var.folder_id
   role      = "admin"

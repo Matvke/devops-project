@@ -42,6 +42,10 @@ resource "yandex_vpc_subnet" "private_app" {
   network_id     = yandex_vpc_network.main.id
   route_table_id = yandex_vpc_route_table.private_rt.id
   labels         = var.tags
+  dhcp_options {
+    domain_name          = "internal"
+    domain_name_servers  = ["10.0.1.2"]
+  }
 }
 
 # Группы безопасности
@@ -96,7 +100,7 @@ resource "yandex_vpc_security_group" "backend_sg" {
     description    = "SSH для администрирования"
     protocol       = "TCP"
     port           = 22
-    v4_cidr_blocks = ["10.0.0.0/8"] # Только из внутренней сети
+    v4_cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {

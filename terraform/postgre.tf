@@ -18,6 +18,8 @@ resource "yandex_compute_instance" "postgres_vm" {
   network_interface {
     subnet_id = yandex_vpc_subnet.private_app.id
     nat       = false
+    security_group_ids = [yandex_vpc_security_group.backend_sg.id]
+
   }
 
   metadata = {

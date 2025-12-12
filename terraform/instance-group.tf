@@ -1,10 +1,3 @@
-# Назначение роли сервисному аккаунту
-resource "yandex_resourcemanager_folder_iam_member" "backend-role-images-puller" {
-  folder_id = var.folder_id
-  role      = "container-registry.images.puller"
-  member    = "serviceAccount:${yandex_iam_service_account.backend.id}"
-}
-
 # Создание Instance Group
 
 resource "yandex_compute_instance_group" "backend-vm-group" {
@@ -27,8 +20,9 @@ resource "yandex_compute_instance_group" "backend-vm-group" {
     }
 
     network_interface {
-      subnet_ids = ["${yandex_vpc_subnet.private_app.id}"]
-      nat       = true
+      network_id = yandex_vpc_network.main.id
+      subnet_ids = [yandex_vpc_subnet.private_app.id]
+      security_group_ids = [yandex_vpc_security_group.backend_sg.id]
     }
 
     metadata = {
@@ -56,8 +50,8 @@ resource "yandex_compute_instance_group" "backend-vm-group" {
 
         packages:
           - docker.io
-          - docker-compose
-          - postgresql-client-15
+          - docker-compose-v2
+          - postgresql-client
         
         runcmd:
           - systemctl enable docker
@@ -96,11 +90,17 @@ resource "yandex_compute_instance_group" "backend-vm-group" {
       size = 2
     }
   }
+
   allocation_policy {
     zones = ["${var.zone}"]
   }
+
   deploy_policy {
     max_expansion = 2
     max_unavailable    = 2
+  }
+  
+  load_balancer {
+    target_group_name = "backend-target-group"
   }
 }

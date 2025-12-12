@@ -105,24 +105,6 @@ output "route_table_id" {
   value       = yandex_vpc_route_table.private_rt.id
 }
 
-output "load_balancer" {
-  description = "Load Balancer details"
-  value = {
-    address = try(
-      one([
-        for listener in yandex_lb_network_load_balancer.main.listener : 
-        listener.external_address_spec[0].address
-        if length(listener.external_address_spec) > 0
-      ]),
-      null
-    )
-    
-    port = try(one(yandex_lb_network_load_balancer.main.listener[*].port), null)
-    full_info = try(yandex_lb_network_load_balancer.main, null)
-  }
-  sensitive = true
-}
-
 output "generated_env_preview" {
   value = <<-EOT
     =========== GENERATED .ENV PREVIEW ===========
