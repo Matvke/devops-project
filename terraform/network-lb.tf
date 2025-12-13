@@ -3,7 +3,7 @@ resource "yandex_lb_network_load_balancer" "app-nlb" {
 
   listener {
     name = "app-listener"
-    port = 9000
+    port = 80
     external_address_spec {
       ip_version = "ipv4"
     }
@@ -15,7 +15,7 @@ resource "yandex_lb_network_load_balancer" "app-nlb" {
     healthcheck {
       name = "http"
       http_options {
-        port = 9000
+        port = 80
         path = "/health/api/"
       }
     }
