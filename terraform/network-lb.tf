@@ -21,3 +21,7 @@ resource "yandex_lb_network_load_balancer" "app-nlb" {
     }
   }
 }
+
+data "yandex_lb_network_load_balancer" "app-nlb-data" {
+  network_load_balancer_id = yandex_lb_network_load_balancer.app-nlb.id
+}

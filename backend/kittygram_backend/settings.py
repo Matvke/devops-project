@@ -97,30 +97,29 @@ USE_L10N = True
 
 USE_TZ = True
 
-# settings.py
 if os.getenv('USE_S3', 'False').lower() in ('true', '1', 't'):
     # Yandex Object Storage настройки
     AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
     AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
     AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
-    AWS_S3_ENDPOINT_URL = os.getenv('AWS_S3_ENDPOINT_URL', 'https://storage.yandexcloud.net')
-    AWS_S3_REGION_NAME = os.getenv('AWS_S3_REGION_NAME', 'ru-central1')
+
+    AWS_S3_ENDPOINT_URL = 'https://storage.yandexcloud.net'
+    AWS_S3_REGION_NAME = 'ru-central1'
+    AWS_S3_ADDRESSING_STYLE = 'virtual'
 
     # Настройки файлов
-    AWS_DEFAULT_ACL = 'public-read'
-    AWS_QUERYSTRING_AUTH = False
+    AWS_DEFAULT_ACL = 'private'
+    AWS_QUERYSTRING_AUTH = True
     AWS_S3_FILE_OVERWRITE = False
-    AWS_S3_OBJECT_PARAMETERS = {
-        'CacheControl': 'max-age=86400',
-    }
+    AWS_S3_MAX_MEMORY_SIZE = 100 * 1024 * 1024
 
-    # Хранилища (используем кастомные классы)
-    STATICFILES_STORAGE = 'kittygram_backend.storage_backends.StaticStorage'
-    DEFAULT_FILE_STORAGE = 'kittygram_backend.storage_backends.MediaStorage'
+    # STATICFILES_STORAGE = 'kittygram_backend.storage_backend.StaticStorage'
+    DEFAULT_FILE_STORAGE = 'kittygram_backend.storage_backend.MediaStorage'
 
-    # URL'ы напрямую к S3 или через CDN
-    STATIC_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/static/'
-    MEDIA_URL = f'{AWS_S3_ENDPOINT_URL}/{AWS_STORAGE_BUCKET_NAME}/media/'
+    STATIC_URL = '/backend_static/'
+    STATIC_ROOT = os.path.join(BASE_DIR, 'backend_static')
+
+    MEDIA_URL = '/media/'
     
 else:
     STATIC_URL = '/backend_static/'

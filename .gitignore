@@ -161,3 +161,6 @@ terraform.tfstate.backup
 **/*.terraform
 key.json
 terraform_outputs.json
+
+# Cursor
+/.cursor

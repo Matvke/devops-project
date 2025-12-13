@@ -34,6 +34,9 @@ resource "yandex_compute_instance_group" "app-group" {
         db_host = yandex_compute_instance.postgres-vm.network_interface.0.ip_address
         db_password = var.db_password
         django_secret_key = var.django_secret_key
+        aws_acces_key_id = yandex_iam_service_account_static_access_key.sa-static-key.access_key
+        aws_acces_key = yandex_iam_service_account_static_access_key.sa-static-key.secret_key
+        bucket_name = yandex_storage_bucket.kittygram_media.bucket
       })
     }
   }
