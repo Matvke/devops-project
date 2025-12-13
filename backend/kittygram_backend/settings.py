@@ -113,12 +113,10 @@ if os.getenv('USE_S3', 'False').lower() in ('true', '1', 't'):
     AWS_S3_FILE_OVERWRITE = False
     AWS_S3_MAX_MEMORY_SIZE = 100 * 1024 * 1024
 
-    # STATICFILES_STORAGE = 'kittygram_backend.storage_backend.StaticStorage'
+    STATICFILES_STORAGE = 'kittygram_backend.storage_backend.StaticStorage'
     DEFAULT_FILE_STORAGE = 'kittygram_backend.storage_backend.MediaStorage'
 
     STATIC_URL = '/backend_static/'
-    STATIC_ROOT = os.path.join(BASE_DIR, 'backend_static')
-
     MEDIA_URL = '/media/'
     
 else:
