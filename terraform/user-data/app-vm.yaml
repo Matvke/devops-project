@@ -1,0 +1,125 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+
+packages:
+  - docker.io
+  - docker-compose
+  - curl
+  - git
+  - ca-certificates
+  - gnupg
+  - lsb-release
+
+write_files:
+  - path: /home/ubuntu/.env
+    content: |
+      POSTGRES_DB=kittygram
+      POSTGRES_USER=kittygram_user
+      POSTGRES_PASSWORD=${db_password}
+      DB_HOST=${db_host}
+      DB_PORT=5432
+      DJANGO_SECRET_KEY=${django_secret_key}
+      DEBUG=False
+      ALLOWED_HOSTS=*
+      CSRF_TRUSTED_ORIGINS=http://localhost,http://127.0.0.1
+      CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+    owner: root:root
+    permissions: '0644'
+
+  - path: /home/ubuntu/docker-compose.yml
+    content: |
+      version: '3.8'
+      
+      volumes:
+        static:
+        media:
+      
+      services:
+        backend:
+          image: cr.yandex/crp6qrsugbr2qs16ckd1/kittygram-backend:latest
+          env_file: .env
+          restart: unless-stopped
+          volumes:
+            - static:/app/backend_static
+            - media:/app/media
+      
+        frontend:
+          image: cr.yandex/crp6qrsugbr2qs16ckd1/kittygram-frontend:latest
+          env_file: .env
+          command: cp -r /app/build/. /static/
+          restart: unless-stopped
+          volumes:
+            - static:/static
+      
+        gateway:
+          image: cr.yandex/crp6qrsugbr2qs16ckd1/kittygram-gateway:latest
+          env_file: .env
+          ports:
+            - "80:80"
+          restart: unless-stopped
+          volumes:
+            - static:/static
+            - media:/media/
+          depends_on:
+            - backend
+    owner: root:root
+    permissions: '0644'
+
+  - path: /home/ubuntu/install_yc.sh
+    content: |
+      #!/bin/bash
+      wget -q https://storage.yandexcloud.net/yandexcloud-yc/release/0.181.0/linux/amd64/yc -O /tmp/yc
+      sudo install -m 755 /tmp/yc /usr/local/bin/
+      rm /tmp/yc
+      echo "yc installed successfully"
+    owner: root:root
+    permissions: '0755'
+
+  - path: /home/ubuntu/key.json
+    content: |
+      {
+        "id": "aje6b3fn06q525jroipk",
+        "service_account_id": "ajevs5292i9g6dc4s3ti",
+        "created_at": "2025-12-10T10:45:49.457905533Z",
+        "key_algorithm": "RSA_2048",
+        "public_key": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1hjVaMnkwkxKsDcaV6ad\ntdwWZxA3fVdZ7P6kq7Luh8X1ea1LHaDtpFM4Nnav4wrByalyaliQms5/7BHXKzpa\nC6lecralk4kDcaqfUqHMfIbcns1WxoEPVNgo6Qn9v/ICyrY9h5mMjdzsWvKAl8ye\n7LvkpoP+mj6p/cVLiCsaEmdMJFBEd3BP7b8JrSbQ2xC3hg2V3HcRkv8iypdWIsBf\no2MRbCxailhH22Pf7sfXgYs0Z4yeNSeMGNQgH0T3JbavgBYErFtlF0I/oiGj4GgV\nivW4HVL1nX9KFmGMbUm40Yk2ChR4zXvSEM7P2csQgCAe7DQNgxg0gSey/ZaHoVVK\n7QIDAQAB\n-----END PUBLIC KEY-----\n",
+        "private_key": "PLEASE DO NOT REMOVE THIS LINE! Yandex.Cloud SA Key ID \u003caje6b3fn06q525jroipk\u003e\n-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDWGNVoyeTCTEqw\nNxpXpp213BZnEDd9V1ns/qSrsu6HxfV5rUsdoO2kUzg2dq/jCsHJqXJqWJCazn/s\nEdcrOloLqV5ytqWTiQNxqp9Socx8htyezVbGgQ9U2CjpCf2/8gLKtj2HmYyN3Oxa\n8oCXzJ7su+Smg/6aPqn9xUuIKxoSZ0wkUER3cE/tvwmtJtDbELeGDZXcdxGS/yLK\nl1YiwF+jYxFsLFqKWEfbY9/ux9eBizRnjJ41J4wY1CAfRPcltq+AFgSsW2UXQj+i\nIaPgaBWK9bgdUvWdf0oWYYxtSbjRiTYKFHjNe9IQzs/ZyxCAIB7sNA2DGDSBJ7L9\nloehVUrtAgMBAAECggEAMz8Yfg+tcRCf5BQcexSHtYsr1ZmdHqR1AvRk6DBZRiiN\nPIXNcBcgKvA8iVTZfwgJIMMtfuUaH+QD3LbcgR1jhl0RHXY4pdrq9x83KalO8BO7\n5UsTVUp5J/7hs/5PPc2o+2qpybZoXWCfNpnLTAqPk+zZqz33CGate+/ox3xBrluZ\nCrT/oKVyMNoFGviC2OTnDPDoc655VPYbtEMvdiS2D6X43/yRwQp4ePQ+BaIQGcz5\nlhvjgtu0G6UdFs/DzmfO2Q3HPFHVRf3YrGXDIiagqnGNa6j0tZwYQNywye5kC32q\nOIXe1++PnlDnVx+Kd19t4p6O9oaeThj+wINvK+syxQKBgQDZL674KhJH1KyJd369\nGSA9OvonJybWB/u105Krf8s3XvHFfpeM7wejY8vjG70LudBEtN/LF9TuZeeF8H9f\nzfenRE32I3S1qz3g5v/sASCGHSwLpGevu3ow9vw1H+t8WeWFa6TkQU1VqtNzmkyd\n1pvxEjq6/TsOU9ZnGsBiobolrwKBgQD8W9DlVWUqcfGFNBRwn7B5etfP1K4iIHli\n+LNvEOGafwcyVxPzXAZ6u19HUuLAwCgnmzdyUBrOA7eaCXwYdTVwwrLi0Fyp6K2G\nRL6rB8V/tlbvcWwfq5kykKb/wXGoD+LqVkVKhtKAajdjXN7aNY2wY2hIoc8qkk/+\nS8yBRy0cIwKBgF4xPvokDO+YPggUiiPq7L+Bf5JReZdjuPf/vWGht/nYtJSJtaKK\n3E4xbvCdTBz0xm214EVNnayTB5lgV22uf1TM297/O5O6o8iRhrbNOlTP/BVEhS+C\n6Jip1XIY2OGCf3eg2s+fvrGDt9cwOUBPHiysUkpcnys0kwz+XieoqnnDAoGBAIws\np/0rEPWhswlNY2knmovvyz57IXp9VU+/W1P/KYF6u9GfgspzvHmh6Iuio6dzVRqi\n4gqSKkFy2SIr0I15VYTb8SeBm2cZgoGJX+t6dp649tMrymZRF9h5dvmrRumWYXHP\nF9AM0ZJY7Yk4xeSpSJnIrd1iW8OG3/4dtmu80HbHAoGAcrWw04z99fTPIdScVgdt\n4pOtiaL0tgV0fm0hfOX7Z8lGaB9eBNLAnID63raCWRrWn3Nlhk/yasmXCyeyZdDm\nG7zGLnUiW3U+HMufEBn53ZFzio++Apt348sphlYy9P5kjAF9H5R+MgOPfGm0b2Yg\naDflqyqAEu9yITTzQE251VU=\n-----END PRIVATE KEY-----\n"
+      }
+    owner: root:root
+    permissions: '0600'
+
+  - path: /home/ubuntu/auth_yc.sh
+    content: |
+      #!/bin/bash
+      yc config profile create my-robot-profile
+      yc config set cloud-id b1g6s77aj62o4cugq03p
+      yc config set folder-id b1g5pg29cq1knmv3tqfp
+      yc config set service-account-key /home/ubuntu/key.json
+    owner: ubuntu:ubuntu
+    permissions: '0755'
+
+users:
+  - name: ubuntu
+    groups: [sudo, docker]
+    shell: /bin/bash
+    sudo: 'ALL=(ALL) NOPASSWD:ALL'
+    ssh_authorized_keys:
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHG7I/TEXSLjhxxLOnuCMEPYKnn6qVaO7psHffR2/G9l matvei31055@gmail.com
+
+runcmd:
+  - [chown, -R, ubuntu:ubuntu, /home/ubuntu]
+  - [chmod, 755, /home/ubuntu]
+  - [sudo, -u, ubuntu, /home/ubuntu/install_yc.sh]
+  - [sudo, -u, ubuntu, /home/ubuntu/auth_yc.sh]
+  - [systemctl, restart, docker]
+  - [sudo, usermod, -aG, docker, ubuntu]
+  - [sleep, 3]
+  - |
+    sudo -u ubuntu /bin/bash -c "
+    cd /home/ubuntu
+    export PATH=\$PATH:/usr/local/bin
+    IAM_TOKEN=\$(yc iam create-token --profile my-robot-profile)
+    echo \"\$IAM_TOKEN\" | docker login --username iam --password-stdin cr.yandex
+    "
+  - [sudo, -u, ubuntu, docker-compose, -f, /home/ubuntu/docker-compose.yml, up, -d]

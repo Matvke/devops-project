@@ -12,10 +12,10 @@ router.register(r'achievements', AchievementViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/health', health),
     path('api/', include(router.urls)),
     path('api/', include('djoser.urls')),  # Работа с пользователями
     path('api/', include('djoser.urls.authtoken')),  # Работа с токенами
-    path('api/health', health)
 ]
 
 if settings.DEBUG:

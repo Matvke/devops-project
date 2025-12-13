@@ -1,87 +1,40 @@
-# Создание Instance Group
-
-resource "yandex_compute_instance_group" "backend-vm-group" {
-  name               = "kittygram-backend"
-  folder_id          = var.folder_id
-  service_account_id = yandex_iam_service_account.backend.id
+resource "yandex_compute_instance_group" "app-group" {
+  name               = "app-instance-group"
+  service_account_id = yandex_iam_service_account.ig_sa.id
   
   instance_template {
     platform_id = "standard-v3"
+    
     resources {
       cores  = 2
-      memory = 2
+      memory = 4
     }
 
     boot_disk {
+      mode = "READ_WRITE"
       initialize_params {
-        image_id = var.image_id 
-        size     = 20
+        image_id = "fd8emvfmfoaordspe1jr"
+        size     = 30
       }
     }
 
+    scheduling_policy {
+        preemptible = true
+    }
+
     network_interface {
-      network_id = yandex_vpc_network.main.id
-      subnet_ids = [yandex_vpc_subnet.private_app.id]
-      security_group_ids = [yandex_vpc_security_group.backend_sg.id]
+      network_id = yandex_vpc_network.network.id
+      subnet_ids = [yandex_vpc_subnet.subnet.id]
+      nat        = true
+      security_group_ids = [yandex_vpc_security_group.app-sg.id]
     }
 
     metadata = {
-      serial-port-enable = 1
-      user-data          = <<-EOF
-        #cloud-config
-        users:
-          - name: ubuntu
-            groups: sudo
-            shell: /bin/bash
-            sudo: 'ALL=(ALL) NOPASSWD:ALL'
-            ssh-authorized-keys:
-              - ${file(var.ssh_key_path)}
-
-        runcmd:
-          - mkdir -p /app/
-          - chown -R ubuntu:ubuntu /app
-
-        write_files:
-          - path: /app/.env
-            owner: ubuntu:ubuntu
-            permissions: '0600'  # только владелец
-            content: |
-              ${indent(14, data.template_file.django_env.rendered)}
-
-        packages:
-          - docker.io
-          - docker-compose-v2
-          - postgresql-client
-        
-        runcmd:
-          - systemctl enable docker
-          - systemctl start docker
-
-          - export YC_TOKEN=$(yc iam create-token)
-          - echo $YC_TOKEN | docker login --username oauth --password-stdin cr.yandex
-          
-          # Проверка БД
-          - echo "Waiting for database..."
-          - source /app/.env
-          - export PGPASSWORD="$POSTGRES_PASSWORD"
-          - until psql -h "$DB_HOST" -p "$DB_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT 1;" &>/dev/null; do
-              echo "Database not ready, waiting..."
-              sleep 5
-            done
-          
-          # Запуск
-          - docker pull cr.yandex/${var.docker_registry_id}/${var.docker_backend_image}:${var.docker_tag}
-          - docker run -d \
-              --name kittygram-backend \
-              --env-file /app/.env \
-              -p 8000:8000 \
-              -v /app/media:/app/media \
-              -v /app/static:/app/static \
-              cr.yandex/${var.docker_registry_id}/${var.docker_backend_image}:${var.docker_tag}
-          
-          # Логи
-          - docker logs --tail 100 kittygram-backend > /var/log/docker-backend.log
-      EOF
+      user-data = templatefile("${path.module}/user-data/app-vm.yaml", {
+        db_host = yandex_compute_instance.postgres-vm.network_interface.0.ip_address
+        db_password = var.db_password
+        django_secret_key = var.django_secret_key
+      })
     }
   }
 
@@ -92,15 +45,22 @@ resource "yandex_compute_instance_group" "backend-vm-group" {
   }
 
   allocation_policy {
-    zones = ["${var.zone}"]
+    zones = ["ru-central1-a"]
   }
 
   deploy_policy {
-    max_expansion = 2
-    max_unavailable    = 2
+    max_unavailable = 1
+    max_expansion   = 0
   }
-  
+
   load_balancer {
-    target_group_name = "backend-target-group"
+    target_group_name = "app-target-group"
   }
+
+  depends_on = [
+    yandex_compute_instance.postgres-vm,
+    yandex_vpc_security_group.db-sg,
+    yandex_vpc_security_group.app-sg,
+    yandex_vpc_subnet.subnet
+    ]
 }

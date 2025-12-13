@@ -26,8 +26,11 @@ resource "yandex_compute_instance" "postgres-vm" {
     security_group_ids = [yandex_vpc_security_group.db-sg.id]
   }
 
-  metadata = {
-    user-data = file("${path.module}/user-data/db-vm.yaml")
-  }
-
+    metadata = {
+    user-data = templatefile("${path.module}/user-data/db-vm.yaml", {
+        POSTGRES_DB      = "kittygram"
+        POSTGRES_USER    = "kittygram_user"
+        POSTGRES_PASSWORD = var.db_password
+    })
+    }
 }
